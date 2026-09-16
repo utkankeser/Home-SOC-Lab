@@ -1,0 +1,15 @@
+CASE-001
+
+Alert:
+PowerShell process creation detected.
+
+Analysis:
+PowerShell was executed by cmd.exe under the lab user's account.
+The command line contained only "powershell.exe".
+No Sysmon Event ID 3 network connection was observed for this activity.
+
+Assessment:
+No malicious indicators identified from the available telemetry.
+
+Disposition:
+Benign / Closed
