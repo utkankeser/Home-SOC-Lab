@@ -17,9 +17,9 @@ The lab environment is fully isolated within a dedicated VirtualBox Host-Only vi
                   [ 192.168.56.101 ]
                      Kali Attacker
 
-[ 192.168.56.104 ]     [ 192.168.56.102 ]     [ 192.168.56.103 ]
-Ubuntu Server          Windows 10 Victim      Wazuh SIEM Manager
-(sshd / PAM logs)     (Sysmon ID 1/3, 4625)   (Indexer & Dashboard)
+[ 192.168.56.104 ]       [ 192.168.56.102 ]     [ 192.168.56.103 ]
+Ubuntu Server            Windows 10 Victim      Wazuh SIEM Manager
+(sshd / PAM logs)       (Sysmon ID 1/3, 4625)   (Indexer & Dashboard)
 
 
 ## Executed Attack Scenarios & Detection Telemetry
