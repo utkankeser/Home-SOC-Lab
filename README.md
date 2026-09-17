@@ -16,10 +16,7 @@ The lab environment is fully isolated within a dedicated VirtualBox Host-Only vi
 | **Adversary** | `kali` | Kali Linux | `192.168.56.101` | Nmap, Hydra, Smbclient, Living-off-the-Land Tools |
                   [ 192.168.56.101 ]
                      Kali Attacker
-                          |
-   +----------------------+----------------------+
-   |                      |                      |
-   v                      v                      v
+
 [ 192.168.56.104 ]     [ 192.168.56.102 ]     [ 192.168.56.103 ]
 Ubuntu Server          Windows 10 Victim      Wazuh SIEM Manager
 (sshd / PAM logs)     (Sysmon ID 1/3, 4625)   (Indexer & Dashboard)
