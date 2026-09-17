@@ -14,12 +14,6 @@ The lab environment is fully isolated within a dedicated VirtualBox Host-Only vi
 | **Endpoint 1** | `Windows-Victim`| Windows 10 Enterprise | `192.168.56.102` | Wazuh Agent v4.14, Sysmon (Process & Netmon) |
 | **Endpoint 2** | `Ubuntu-Server` | Ubuntu Server 24.04 LTS | `192.168.56.104` | Wazuh Agent v4.14, PAM / OpenSSH (`sshd-session`)|
 | **Adversary** | `kali` | Kali Linux | `192.168.56.101` | Nmap, Hydra, Smbclient, Living-off-the-Land Tools |
-                  [ 192.168.56.101 ]
-                     Kali Attacker
-
-[ 192.168.56.104 ]       [ 192.168.56.102 ]     [ 192.168.56.103 ]
-Ubuntu Server            Windows 10 Victim      Wazuh SIEM Manager
-(sshd / PAM logs)       (Sysmon ID 1/3, 4625)   (Indexer & Dashboard)
 
 
 ## Executed Attack Scenarios & Detection Telemetry
